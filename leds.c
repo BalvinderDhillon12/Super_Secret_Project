@@ -4,9 +4,9 @@
  * Target: PIC18F67K40
  *
  * Description: LEDs driver implementation.
- *              Owns all code for the 10-LED output bus on scattered ports:
- *              main light (RC6), binary clock (LEDs 1-5: RG0, RG1, RA2, RF6, RA4),
- *              heartbeat (RB1). LDR pin (RA3) is configured in ADC_Init().
+ *              Owns all code for the 9-LED output bus on scattered ports:
+ *              binary clock (LEDs 1-5: RG0, RG1, RA2, RF6, RA4), LEDs 6-7 off (RA5, RF0),
+ *              heartbeat (LED 8, RB0), main light (LED 9, RB1). LDR pin (RA3) in ADC_Init().
  ******************************************************************************/
 
 #include <xc.h>
@@ -18,9 +18,9 @@
  ******************************************************************************/
 
 /**
- * @brief Initialize the 10-LED bus.
+ * @brief Initialize the 9-LED bus.
  *
- * All 10 LED pins are set as outputs (off at reset).
+ * All 9 LED pins are set as outputs (off at reset).
  * LDR pin (RA3) is configured in ADC_Init().
  */
 void LEDs_Init(void) {
@@ -48,22 +48,19 @@ void LEDs_Init(void) {
     /* LED 8: RB0 */
     TRISBbits.TRISB0 = 0;
     LATBbits.LATB0 = 0;
-    /* LED 9: RB1 (heartbeat) */
+    /* LED 9: RB1 (main light / day-night) */
     TRISBbits.TRISB1 = 0;
     LATBbits.LATB1 = 0;
-    /* LED 10: RC6 (main light) */
-    TRISCbits.TRISC6 = 0;
-    LATCbits.LATC6 = 0;
 }
 
 /**
- * @brief Set the main streetlight output high or low (LED 10, RC6).
+ * @brief Set the main streetlight output high or low (LED 9, RB1).
  *
  * We drive the pin high for ON and low for OFF; the hardware (relay/MOSFET)
  * inverts if necessary.
  */
 void LEDs_SetMainLight(bool state) {
-    LATCbits.LATC6 = state ? 1 : 0;
+    LATBbits.LATB1 = state ? 1 : 0;
 }
 
 /**
@@ -84,10 +81,10 @@ void LEDs_SetClockDisplay(uint8_t hour) {
 }
 
 /**
- * @brief Toggle the heartbeat LED (LED 9, RB1).
+ * @brief Toggle the heartbeat LED (LED 8, RB0).
  *
  * Used by the main loop at a slow rate to indicate the system is running.
  */
 void LEDs_ToggleHeartbeat(void) {
-    LATBbits.LATB1 ^= 1;
+    LATBbits.LATB0 ^= 1;
 }

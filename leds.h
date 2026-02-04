@@ -4,10 +4,9 @@
  * Target: PIC18F67K40
  *
  * Description: LEDs driver interface.
- *              Controls 10 LEDs on scattered ports (G, A, F, B, C): main light
- *              (LED 10, RC6), binary clock display (LEDs 1-5 for 5-bit hour),
- *              and heartbeat (LED 9, RB1). Also configures the LDR pin as analog
- *              input for the ADC.
+ *              Controls 9 LEDs on scattered ports (G, A, F, B): binary clock
+ *              (LEDs 1-5 for 5-bit hour), LEDs 6-7 off, heartbeat (LED 8, RB0),
+ *              main light (LED 9, RB1). LDR pin is configured as analog input in ADC.
  ******************************************************************************/
 
 #ifndef LEDS_H
@@ -21,14 +20,14 @@
  ******************************************************************************/
 
 /**
- * @brief Initialize the 10-LED output bus and LDR input pin.
+ * @brief Initialize the 9-LED output bus and LDR input pin.
  *
- * Sets all 10 LED pins as outputs (initially off) and LDR pin as analog input.
+ * Sets all 9 LED pins as outputs (initially off) and LDR pin as analog input.
  */
 void LEDs_Init(void);
 
 /**
- * @brief Set the main streetlight on or off (LED 10, RC6).
+ * @brief Set the main streetlight on or off (LED 9, RB1).
  *
  * @param state true = light ON, false = light OFF
  */
@@ -44,7 +43,7 @@ void LEDs_SetMainLight(bool state);
 void LEDs_SetClockDisplay(uint8_t hour);
 
 /**
- * @brief Toggle the heartbeat LED (LED 9, RB1) for visual status indication.
+ * @brief Toggle the heartbeat LED (LED 8, RB0) for visual status indication.
  */
 void LEDs_ToggleHeartbeat(void);
 
