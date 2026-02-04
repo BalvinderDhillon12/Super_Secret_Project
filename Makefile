@@ -29,12 +29,11 @@ OPTFLAGS = --opt=default,+asm,+asmfile,-speed,+space,-debug
 # Linker flags
 LDFLAGS = -Wl,-Map=dist/output.map
 
-# Source files
+# Source files (driver-based: main + adc, timer, leds drivers)
 SOURCES = main.c \
-          bsp.c \
-          rtc_soft.c \
-          solar_mgr.c \
-          app_control.c
+          adc.c \
+          timer.c \
+          leds.c
 
 # Object files (derived from sources)
 OBJECTS = $(SOURCES:.c=.p1)
