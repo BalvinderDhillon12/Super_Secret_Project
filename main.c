@@ -13,42 +13,18 @@
 
 #include <xc.h>
 #include "config.h"
-#include "adc.h"
 #include "timer.h"
+#include "adc.h"
 #include "leds.h"
 
 /*******************************************************************************
- * CONFIGURATION BITS (PIC18F67K40)
- * TODO: CUSTOMIZE - Adjust for your device variant and application.
+ * CONFIGURATION BITS (PIC18F67K40) - Lab verified hardware settings
  ******************************************************************************/
-#pragma config FEXTOSC = OFF
-#pragma config RSTOSC = HFINTOSC_64MHZ
-#pragma config CLKOUTEN = OFF
-#pragma config CSWEN = ON
-#pragma config FCMEN = ON
-#pragma config MCLRE = EXTMCLR
-#pragma config PWRTE = OFF
-#pragma config LPBOREN = OFF
-#pragma config BOREN = SBORDIS
-#pragma config BORV = LO
-#pragma config ZCD = OFF
-#pragma config PPS1WAY = ON
-#pragma config STVREN = ON
-#pragma config WDTCPS = WDTCPS_31
-#pragma config WDTE = OFF
-#pragma config WDTCWS = WDTCWS_7
-#pragma config WDTCCS = SC
-#pragma config WRT0 = OFF
-#pragma config WRT1 = OFF
-#pragma config WRT2 = OFF
-#pragma config WRT3 = OFF
-#pragma config WRTC = OFF
-#pragma config WRTB = OFF
-#pragma config WRTD = OFF
-#pragma config SCANE = ON
-#pragma config LVP = ON
-#pragma config CP = OFF
-#pragma config CPD = OFF
+#pragma config FEXTOSC = HS     // External Oscillator mode (Crystal > 8MHz)
+#pragma config RSTOSC = EXTOSC_4PLL // Power-up default: EXTOSC with 4x PLL
+#pragma config WDTE = OFF       // Watchdog Timer Disabled
+
+#define _XTAL_FREQ 64000000
 
 /*******************************************************************************
  * TYPE DEFINITIONS
@@ -331,11 +307,6 @@ static bool IsInEnergySaveWindow(uint8_t hour) {
  * SYSTEM INIT
  ******************************************************************************/
 static void SystemInit(void) {
-    /* Oscillator: 16 MHz from HFINTOSC/4. Required before any peripheral that uses Fosc. */
-    OSCCON1bits.NDIV = 0b0010;
-    OSCCON1bits.NOSC = 0b110;
-    while (!OSCCON3bits.ORDY) {}
-
     LEDs_Init();
     ADC_Init();
     Timer_Init();
