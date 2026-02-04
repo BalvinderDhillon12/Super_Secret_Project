@@ -37,7 +37,7 @@ void __interrupt() ISR(void) {
     if (PIR0bits.TMR0IF) {
         PIR0bits.TMR0IF = 0;  /* Clear interrupt flag so we don't re-enter */
 
-        /* TODO: CUSTOMIZE - Check schematic for Timer assignment (reload values in config.h). */
+        /* Reload 0x0BDB for 1 s at 64 MHz (see config.h). */
         TMR0H = TMR0_RELOAD_HIGH;
         TMR0L = TMR0_RELOAD_LOW;
 
@@ -61,7 +61,6 @@ void Timer_Init(void) {
     /* Disable timer while configuring. */
     T0CON0bits.T0EN = 0;
 
-    /* TODO: CUSTOMIZE - Check schematic/datasheet for Timer clock source and prescaler. */
     T0CON0bits.T016BIT = 1;   /* 16-bit mode */
     T0CON1bits.T0CS = 0b010;  /* Clock source = Fosc/4 */
     T0CON1bits.T0ASYNC = 0;   /* Synchronized to system clock */
@@ -74,19 +73,29 @@ void Timer_Init(void) {
     /* Enable Timer0 interrupt and global interrupt. */
     PIR0bits.TMR0IF = 0;
     PIE0bits.TMR0IE = 1;
-    INTCON0bits.GIE = 1;
-    INTCON0bits.IPEN = 0;   /* Legacy mode: single interrupt priority */
+    INTCONbits.PEIE = 1;   /* Peripheral interrupt enable (Timer0, etc.) */
+    INTCONbits.GIE = 1;    /* Global interrupt enable */
 
     /* Start the timer. */
     T0CON0bits.T0EN = 1;
 }
 
 uint32_t Timer_GetTicks(void) {
-    return s_tick_count;
+    uint32_t ticks;
+    uint8_t gie_save;
+
+    gie_save = INTCONbits.GIE;
+    INTCONbits.GIE = 0;   /* Disable interrupts for atomic 32-bit read */
+    ticks = s_tick_count;
+    INTCONbits.GIE = gie_save;
+    return ticks;
 }
 
 void Timer_ResetTicks(void) {
-    /* Simple assignment; on 8-bit PIC 32-bit write is not atomic, but a brief
-     * inconsistent read in main is acceptable for a reset. */
+    uint8_t gie_save;
+
+    gie_save = INTCONbits.GIE;
+    INTCONbits.GIE = 0;   /* Disable interrupts for atomic 32-bit write */
     s_tick_count = 0;
+    INTCONbits.GIE = gie_save;
 }

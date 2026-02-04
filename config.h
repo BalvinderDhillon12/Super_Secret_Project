@@ -26,25 +26,23 @@
  * TIMER CONFIGURATION
  * Timer0 reload values for 1-second (or 1/3600 second in test mode) ticks.
  *
- * For PIC18F67K40 @ 16MHz with Timer0 in 16-bit mode:
+ * For PIC18F67K40 @ 64 MHz with Timer0 in 16-bit mode:
  * - Prescaler 1:256
- * - Timer clock = 16MHz / 4 / 256 = 15.625 kHz
+ * - Timer clock = 64 MHz / 4 / 256 = 62.5 kHz
  *
- * Production: 1.0s tick requires 15625 counts
- *   Timer reload = 65536 - 15625 = 49911 (0xC2F7)
+ * Production: 1.0 s tick requires 62500 counts
+ *   Timer reload = 65536 - 62500 = 3036; verified lab value 3035 (0x0BDB)
+ *   TMR0_RELOAD_HIGH = 0x0B, TMR0_RELOAD_LOW = 0xDB
  *
- * Test Mode: ~277.8us tick requires ~4.34 counts (use 4)
- *   Timer reload = 65536 - 4 = 65532 (0xFFFC)
+ * Test Mode: short period for accelerated time (reload 0xFFFC)
  ******************************************************************************/
 #ifdef TEST_MODE
-    /* TODO: CUSTOMIZE - Check schematic for Timer0 reload assignment (test mode) */
     #define TMR0_RELOAD_HIGH    0xFF
     #define TMR0_RELOAD_LOW     0xFC
     #define TICKS_PER_SECOND    3600    /* Accelerated: 3600 ticks = 1 virtual second */
 #else
-    /* TODO: CUSTOMIZE - Check schematic for Timer0 reload assignment (production) */
-    #define TMR0_RELOAD_HIGH    0xC2
-    #define TMR0_RELOAD_LOW     0xF7
+    #define TMR0_RELOAD_HIGH    0x0B
+    #define TMR0_RELOAD_LOW     0xDB
     #define TICKS_PER_SECOND    1       /* Normal: 1 tick = 1 real second */
 #endif
 
@@ -55,35 +53,6 @@
  ******************************************************************************/
 #define LDR_THRESHOLD_DUSK      400     /* Below this = transition to dark */
 #define LDR_THRESHOLD_DAWN      600     /* Above this = transition to light */
-#define LDR_ADC_CHANNEL         0       /* ANx channel for LDR input */
-
-/*******************************************************************************
- * HARDWARE PIN MAPPINGS
- * Adjust these based on your specific hardware connections.
- * Each driver (leds.c, adc.c) uses these; change here to match your schematic.
- ******************************************************************************/
-
-/* Main Light Control (Relay/MOSFET) - used by leds.c */
-/* TODO: CUSTOMIZE - Check schematic for Main Light pin assignment */
-#define LIGHT_TRIS              TRISDbits.TRISD0
-#define LIGHT_LAT               LATDbits.LATD0
-#define LIGHT_PORT              PORTDbits.RD0
-
-/* Heartbeat LED (Debug/Status Indicator) - used by leds.c */
-/* TODO: CUSTOMIZE - Check schematic for Heartbeat LED pin assignment */
-#define HEARTBEAT_TRIS          TRISDbits.TRISD1
-#define HEARTBEAT_LAT           LATDbits.LATD1
-
-/* Binary Clock Display (5 bits of 10-LED bus for hours 0-23) - used by leds.c */
-/* TODO: CUSTOMIZE - Check schematic for Binary Clock port/pin assignment */
-#define CLOCK_DISPLAY_TRIS      TRISB
-#define CLOCK_DISPLAY_LAT       LATB
-#define CLOCK_DISPLAY_MASK      0x1F    /* Lower 5 bits (RB0-RB4) */
-
-/* LDR ADC Input - used by adc.c and for analog config in leds.c */
-/* TODO: CUSTOMIZE - Check schematic for LDR (ANx) pin assignment */
-#define LDR_TRIS                TRISAbits.TRISA0
-#define LDR_ANSEL               ANSELAbits.ANSELA0
 
 /*******************************************************************************
  * ENERGY-SAVING CONSTANTS
@@ -114,6 +83,6 @@
 /*******************************************************************************
  * OSCILLATOR CONFIGURATION
  ******************************************************************************/
-#define _XTAL_FREQ              16000000UL  /* 16 MHz */
+#define _XTAL_FREQ              64000000UL  /* 64 MHz */
 
 #endif /* CONFIG_H */

@@ -4,9 +4,9 @@
  * Target: PIC18F67K40
  *
  * Description: LEDs driver implementation.
- *              Owns all code for the 10-LED output bus: main light, binary
- *              clock display, and heartbeat LED. Pin mappings come from
- *              config.h; each hardware-dependent line is marked for customization.
+ *              Owns all code for the 10-LED output bus on scattered ports:
+ *              main light (RC6), binary clock (LEDs 1-5: RG0, RG1, RA2, RF6, RA4),
+ *              heartbeat (RB1). LDR pin (RA3) is configured in ADC_Init().
  ******************************************************************************/
 
 #include <xc.h>
@@ -18,64 +18,76 @@
  ******************************************************************************/
 
 /**
- * @brief Initialize the 10-LED bus and LDR input pin.
+ * @brief Initialize the 10-LED bus.
  *
- * Main light and heartbeat are outputs (off at reset). Binary clock uses
- * the lower 5 bits of the configured port. LDR pin is set as input and
- * analog so the ADC can read it.
+ * All 10 LED pins are set as outputs (off at reset).
+ * LDR pin (RA3) is configured in ADC_Init().
  */
 void LEDs_Init(void) {
-    /* TODO: CUSTOMIZE - Check schematic for Main Light pin assignment. */
-    LIGHT_TRIS = 0;   /* Output */
-    LIGHT_LAT = 0;    /* Initially OFF */
-
-    /* TODO: CUSTOMIZE - Check schematic for Heartbeat LED pin assignment. */
-    HEARTBEAT_TRIS = 0;  /* Output */
-    HEARTBEAT_LAT = 0;   /* Initially OFF */
-
-    /* TODO: CUSTOMIZE - Check schematic for Binary Clock (10-LED bus) port/pin assignment. */
-    CLOCK_DISPLAY_TRIS &= ~CLOCK_DISPLAY_MASK;  /* Lower 5 bits as outputs */
-    CLOCK_DISPLAY_LAT &= ~CLOCK_DISPLAY_MASK;   /* Initially all OFF */
-
-    /* TODO: CUSTOMIZE - Check schematic for LDR (analog) pin assignment. */
-    LDR_TRIS = 1;   /* Input */
-    LDR_ANSEL = 1;  /* Analog mode for ADC */
+    /* LED 1: RG0 */
+    TRISGbits.TRISG0 = 0;
+    LATGbits.LATG0 = 0;
+    /* LED 2: RG1 */
+    TRISGbits.TRISG1 = 0;
+    LATGbits.LATG1 = 0;
+    /* LED 3: RA2 */
+    TRISAbits.TRISA2 = 0;
+    LATAbits.LATA2 = 0;
+    /* LED 4: RF6 */
+    TRISFbits.TRISF6 = 0;
+    LATFbits.LATF6 = 0;
+    /* LED 5: RA4 */
+    TRISAbits.TRISA4 = 0;
+    LATAbits.LATA4 = 0;
+    /* LED 6: RA5 */
+    TRISAbits.TRISA5 = 0;
+    LATAbits.LATA5 = 0;
+    /* LED 7: RF0 */
+    TRISFbits.TRISF0 = 0;
+    LATFbits.LATF0 = 0;
+    /* LED 8: RB0 */
+    TRISBbits.TRISB0 = 0;
+    LATBbits.LATB0 = 0;
+    /* LED 9: RB1 (heartbeat) */
+    TRISBbits.TRISB1 = 0;
+    LATBbits.LATB1 = 0;
+    /* LED 10: RC6 (main light) */
+    TRISCbits.TRISC6 = 0;
+    LATCbits.LATC6 = 0;
 }
 
 /**
- * @brief Set the main streetlight output high or low.
+ * @brief Set the main streetlight output high or low (LED 10, RC6).
  *
  * We drive the pin high for ON and low for OFF; the hardware (relay/MOSFET)
  * inverts if necessary.
  */
 void LEDs_SetMainLight(bool state) {
-    /* TODO: CUSTOMIZE - Check schematic for Main Light pin assignment. */
-    LIGHT_LAT = state ? 1 : 0;
+    LATCbits.LATC6 = state ? 1 : 0;
 }
 
 /**
- * @brief Set the binary clock display to show the given hour.
+ * @brief Set the binary clock display to show the given hour (LEDs 1-5).
  *
- * Hour must be 0-23. We mask to 5 bits (0x1F) so the display shows a valid
- * pattern; we only update the bits that belong to the clock mask so other
- * pins on the same port are unchanged.
+ * Hour must be 0-23. Bits 0-4 map to LEDs 1-5 (RG0, RG1, RA2, RF6, RA4).
  */
 void LEDs_SetClockDisplay(uint8_t hour) {
     if (hour >= HOURS_PER_DAY) {
         hour = 0;
     }
 
-    /* TODO: CUSTOMIZE - Check schematic for Binary Clock (10-LED bus) port assignment. */
-    CLOCK_DISPLAY_LAT = (CLOCK_DISPLAY_LAT & ~CLOCK_DISPLAY_MASK) |
-                        (hour & CLOCK_DISPLAY_MASK);
+    LATGbits.LATG0 = (hour & 1) ? 1 : 0;   /* LED 1: bit 0 */
+    LATGbits.LATG1 = (hour & 2) ? 1 : 0;   /* LED 2: bit 1 */
+    LATAbits.LATA2 = (hour & 4) ? 1 : 0;   /* LED 3: bit 2 */
+    LATFbits.LATF6 = (hour & 8) ? 1 : 0;   /* LED 4: bit 3 */
+    LATAbits.LATA4 = (hour & 16) ? 1 : 0;  /* LED 5: bit 4 */
 }
 
 /**
- * @brief Toggle the heartbeat LED.
+ * @brief Toggle the heartbeat LED (LED 9, RB1).
  *
  * Used by the main loop at a slow rate to indicate the system is running.
  */
 void LEDs_ToggleHeartbeat(void) {
-    /* TODO: CUSTOMIZE - Check schematic for Heartbeat LED pin assignment. */
-    HEARTBEAT_LAT ^= 1;
+    LATBbits.LATB1 ^= 1;
 }

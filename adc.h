@@ -14,6 +14,12 @@
 #include <stdint.h>
 
 /*******************************************************************************
+ * LDR HARDWARE MAPPING (RA3 / ANA3)
+ * Channel is defined here so the driver and verified hardware stay in sync.
+ ******************************************************************************/
+#define ADC_LDR_CHANNEL  3   /* RA3 / ANA3 on PIC18F67K40 */
+
+/*******************************************************************************
  * PUBLIC FUNCTION PROTOTYPES
  ******************************************************************************/
 
@@ -28,7 +34,7 @@ void ADC_Init(void);
 /**
  * @brief Read the LDR (Light Dependent Resistor) value.
  *
- * Uses the ADC channel and burst-average settings from config.h.
+ * Uses ADC_LDR_CHANNEL (RA3/ANA3) and burst-average settings.
  * Result is in range 0 (dark) to 1023 (bright).
  *
  * @return uint16_t ADC value (0 = dark, 1023 = bright)

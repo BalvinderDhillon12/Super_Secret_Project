@@ -5,9 +5,10 @@
  *
  * Description: Hardware timer driver interface.
  *              Sets up the system tick timer and owns the interrupt service
- *              routine (ISR) that increments the tick counter. Application code
- *              uses Timer_GetTicks() to drive timekeeping (e.g. one "second"
- *              every TICKS_PER_SECOND ticks).
+ *              routine (ISR) that increments the tick counter. Configured for
+ *              64 MHz and 1 s tick (reload 0x0BDB) per config.h.
+ *              Application code uses Timer_GetTicks() to drive timekeeping
+ *              (e.g. one "second" every TICKS_PER_SECOND ticks).
  ******************************************************************************/
 
 #ifndef TIMER_H

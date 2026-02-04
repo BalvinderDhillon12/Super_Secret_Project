@@ -10,7 +10,6 @@
 
 #include <xc.h>
 #include "adc.h"
-#include "config.h"
 
 /*******************************************************************************
  * PUBLIC FUNCTION IMPLEMENTATIONS
@@ -21,18 +20,17 @@
  *
  * We use ADCC (ADC with Computation) in Burst-Average mode so the hardware
  * accumulates 32 samples and we avoid software averaging and division.
- * Clock and acquisition time are chosen to stay within ADC spec.
+ * LDR is on RA3 (Channel 3). Clock: internal FRC; acquisition time per spec.
  */
 void ADC_Init(void) {
-    /* TODO: CUSTOMIZE - Check schematic for ADC clock source and divider.
-     * Clock: FOSC/64 gives 16MHz/64 = 250 kHz, which is within ADC spec. */
-    ADCLK = 0x1F;  /* FOSC/64 */
+    TRISAbits.TRISA3 = 1;   /* LDR input on RA3 */
+    ANSELAbits.ANSELA3 = 1; /* RA3 analog */
+    ADPCH = ADC_LDR_CHANNEL; /* Channel 3 / ANA3 */
 
-    /* TODO: CUSTOMIZE - Check datasheet for required acquisition time (TAD). */
-    ADACQ = 10;    /* 10 TAD acquisition time */
+    ADCON0bits.ADCS = 1;    /* FRC (Fast RC) clock */
+    ADACQ = 10;             /* 10 TAD acquisition time */
 
-    /* Result format: right-justified so high byte is in ADRESH. */
-    ADCON0bits.ADFM = 1;
+    ADCON0bits.ADFM = 1;    /* Result format: right-justified */
 
     /* Burst-Average mode: hardware takes multiple samples and accumulates. */
     ADCON2bits.MD = 0b010;  /* Burst-Average mode */
@@ -50,7 +48,7 @@ void ADC_Init(void) {
 /**
  * @brief Read LDR via ADC and return averaged value in 0-1023 range.
  *
- * We select the LDR channel (from config.h), start conversion, wait for
+ * We select the LDR channel (RA3/ANA3), start conversion, wait for
  * completion, then read the 16-bit filter register. In burst-average mode
  * the hardware accumulates 32 samples; we divide by 32 with a right shift
  * to get the average in the standard 0-1023 range.
@@ -60,8 +58,7 @@ void ADC_Init(void) {
 uint16_t ADC_ReadLDR(void) {
     uint16_t adc_result;
 
-    /* TODO: CUSTOMIZE - Check schematic for LDR ADC channel (ANx) assignment. */
-    ADPCH = LDR_ADC_CHANNEL;
+    ADPCH = ADC_LDR_CHANNEL;
 
     /* Start one conversion (in burst-average this runs the full burst). */
     ADCON0bits.ADGO = 1;
