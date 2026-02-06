@@ -33,7 +33,7 @@ void ADC_Init(void) {
     ADCON0bits.ADFM = 1;    /* Result format: right-justified */
 
     /* Burst-Average mode: hardware takes multiple samples and accumulates. */
-    ADCON2bits.MD = 0b010;  /* Burst-Average mode */
+    ADCON2bits.ADMD = 0b010;  /* <-- Fixed: ADMD not MD */
 
     /* 32 samples: result is 32x raw value, so we shift right by 5 to get 0-1023. */
     ADRPT = 32;

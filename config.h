@@ -39,7 +39,7 @@
 #ifdef TEST_MODE
     #define TMR0_RELOAD_HIGH    0xFF
     #define TMR0_RELOAD_LOW     0xFC
-    #define TICKS_PER_SECOND    3600    /* Accelerated: 3600 ticks = 1 virtual second */
+    #define TICKS_PER_SECOND    4   /* Accelerated: 3600 ticks = 1 virtual second */
 #else
     #define TMR0_RELOAD_HIGH    0x0B
     #define TMR0_RELOAD_LOW     0xDB
