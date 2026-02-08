@@ -19,9 +19,6 @@ void ADC_Init(void) {
 
     ADCON0bits.ADFM = 1;    // Right-justified result (10-bit in ADRESH/ADRESL)
 
-    /* Basic (single conversion) mode; burst-average disabled for board compatibility. */
-    ADCON2bits.MD = 0b000;
-
     ADREF = 0x00;            // VREF+ = VDD, VREF- = VSS
 
     ADCON0bits.ADON = 1;
