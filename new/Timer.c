@@ -27,8 +27,8 @@ void Timer_Init(void) {
     T0CON0bits.T0EN = 0;
 
     T0CON0bits.T016BIT = 1;   // 16-bit mode 
-    T0CON1bits.T0CS = 0b010;  // Clock source
-    T0CON1bits.T0ASYNC = 0;   // Synchronized to system clock 
+    T0CON1bits.T0CS = 0b010;  // Fosc/4
+    T0CON1bits.T0ASYNC = 1;   // Datasheet errata: needed for correct operation when Fosc/4 used
     T0CON1bits.T0CKPS = 0b1000;  /* Prescaler 1:256 */
 
 

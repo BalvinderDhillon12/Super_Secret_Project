@@ -15,7 +15,7 @@ void ADC_Init(void) {
     ADPCH = ADC_LDR_CHANNEL; // RA3
 
     ADCON0bits.ADCS = 1;    // FRC (Fast RC) clock
-    ADACQ = 10;             // 10 TAD acquisition time
+    ADACQ = 0xFF;           // Max acquisition time (critical for stable LDR readings)
 
     ADCON0bits.ADFM = 1;    // Right-justified result (10-bit in ADRESH/ADRESL)
 
