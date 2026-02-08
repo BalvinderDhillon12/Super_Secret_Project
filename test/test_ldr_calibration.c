@@ -33,9 +33,8 @@ static uint16_t ReadLDR_Averaged(void) {
 int main(void) {
     uint16_t dark_value;
     uint16_t light_value;
-    uint16_t threshold;
-    uint16_t range;
-    uint16_t hyst;
+    uint16_t delta;
+    uint8_t led_on;
 
     LEDs_Init();
     ADC_Init();
@@ -67,26 +66,27 @@ int main(void) {
     }
     __delay_ms(50);
 
-    threshold = (dark_value + light_value) / 2u;
-    range = dark_value - light_value;
-    hyst = range / 4u;
-    if (hyst < 5u) hyst = 5u;   /* minimum margin to avoid noise */
-    LEDs_SetMainLight(0);
+    if (dark_value > light_value)
+        delta = (dark_value - light_value) / 2u;
+    else
+        delta = (light_value - dark_value) / 2u;
+    if (delta < 10u) delta = 10u;
+
+    led_on = 1;
+    LEDs_SetMainLight(1);
     __delay_ms(500);  /* let reading settle before run loop (like partner's startup) */
 
-    /* Running: LED 9 on when dark, off when light; hysteresis avoids blinking near threshold */
-    {
-        bool led_on = false;
-        for (;;) {
-            uint16_t reading = ReadLDR_Averaged();
-            if (reading >= threshold + hyst) {
-                led_on = true;
-                LEDs_SetMainLight(1);
-            } else if (reading <= threshold - hyst) {
-                led_on = false;
-                LEDs_SetMainLight(0);
-            }
-            __delay_ms(500);
+    /* Running: partner's relative-change comparison; dark_value = baseline */
+    while (1) {
+        uint16_t reading = ReadLDR_Averaged();
+
+        if (reading > dark_value + delta || reading + delta < dark_value) {
+            led_on = 0;   /* reading far from dark baseline → light → LED OFF */
+        } else {
+            led_on = 1;   /* reading near dark baseline → dark → LED ON */
         }
+
+        LEDs_SetMainLight(led_on);
+        __delay_ms(500);
     }
 }
