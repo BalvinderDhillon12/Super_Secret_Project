@@ -1,7 +1,8 @@
-/* NEED TO CHANGE THIS SECTION
- * File:   ADC.h
- * Purpose: This file is to convert analog voltage to a digital number through an ADC (analogue to digital converter) driver which reads the light sensor�
- */
+/*******************************************************************************
+ * File:   Timer.c
+ * Purpose: System tick timer; generates periodic interrupts. Tick period
+ *          and TICKS_PER_SECOND are defined in Config.h (TEST_MODE vs production).
+ ******************************************************************************/
 
 #include <xc.h>
 #include "Timer.h"
@@ -12,7 +13,7 @@ void __interrupt() ISR(void) {
     if (PIR0bits.TMR0IF) {
         PIR0bits.TMR0IF = 0;  // Clear interrupt flag so we don't re-enter 
 
-        // Reload 0x0BDB for 1 s at 64 MHz
+        /* Reload for next period (values from Config.h). */
         TMR0H = TMR0_RELOAD_HIGH;
         TMR0L = TMR0_RELOAD_LOW;
 
@@ -26,9 +27,9 @@ void Timer_Init(void) {
     T0CON0bits.T0EN = 0;
 
     T0CON0bits.T016BIT = 1;   // 16-bit mode 
-    T0CON1bits.T0CS = 0b010;  // Clock source
-    T0CON1bits.T0ASYNC = 1;   // Synchronized to system clock 
-    T0CON1bits.T0CKPS = 0b1000;  //1:256 prescaler 
+    T0CON1bits.T0CS = 0b010;  // Fosc/4
+    T0CON1bits.T0ASYNC = 1;   // Required on this hardware when Fosc/4 is clock source (heartbeat/timer stop with 0)
+    T0CON1bits.T0CKPS = 0b1000;  /* Prescaler 1:256 */
 
 
     // Load initial value for first period. 
@@ -50,7 +51,7 @@ uint32_t Timer_GetTicks(void) {
     uint8_t gie_save;
 
     gie_save = INTCONbits.GIE;
-    INTCONbits.GIE = 0;   // Disable interrupts foe read
+    INTCONbits.GIE = 0;   /* Disable interrupts for atomic read */
     ticks = s_tick_count;
     INTCONbits.GIE = gie_save;
     return ticks;
