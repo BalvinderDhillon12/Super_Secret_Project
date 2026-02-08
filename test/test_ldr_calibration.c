@@ -57,7 +57,7 @@ int main(void) {
     __delay_ms(50);
 
     threshold = (dark_value + light_value) / 2u;
-    range = light_value - dark_value;
+    range = dark_value - light_value;
     hyst = range / 4u;
     if (hyst < 5u) hyst = 5u;   /* minimum margin to avoid noise */
     LEDs_SetMainLight(0);
@@ -67,10 +67,10 @@ int main(void) {
         bool led_on = false;
         for (;;) {
             uint16_t reading = ADC_ReadLDR();
-            if (reading <= threshold - hyst) {
+            if (reading >= threshold + hyst) {
                 led_on = true;
                 LEDs_SetMainLight(1);
-            } else if (reading >= threshold + hyst) {
+            } else if (reading <= threshold - hyst) {
                 led_on = false;
                 LEDs_SetMainLight(0);
             }
