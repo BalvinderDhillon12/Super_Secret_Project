@@ -18,6 +18,17 @@
 #define _XTAL_FREQ 64000000
 
 #define BLINK_MS 300
+#define NUM_SAMPLES 32
+#define DAY_DELTA   150   /* change needed to detect day vs night (from partner) */
+
+static uint16_t ReadLDR_Averaged(void) {
+    uint32_t sum = 0;
+    for (uint8_t i = 0; i < NUM_SAMPLES; i++) {
+        sum += ADC_ReadLDR();
+        __delay_ms(2);
+    }
+    return (uint16_t)(sum / NUM_SAMPLES);
+}
 
 int main(void) {
     uint16_t dark_value;
@@ -41,7 +52,7 @@ int main(void) {
         }
     }
     __delay_ms(50);
-    dark_value = ADC_ReadLDR();
+    dark_value = ReadLDR_Averaged();
     while (Button_RF2_Read() == 1) {
     }
     __delay_ms(50);
@@ -51,7 +62,7 @@ int main(void) {
     while (Button_RF2_Read() == 0) {
     }
     __delay_ms(50);
-    light_value = ADC_ReadLDR();
+    light_value = ReadLDR_Averaged();
     while (Button_RF2_Read() == 1) {
     }
     __delay_ms(50);
@@ -61,12 +72,13 @@ int main(void) {
     hyst = range / 4u;
     if (hyst < 5u) hyst = 5u;   /* minimum margin to avoid noise */
     LEDs_SetMainLight(0);
+    __delay_ms(500);  /* let reading settle before run loop (like partner's startup) */
 
     /* Running: LED 9 on when dark, off when light; hysteresis avoids blinking near threshold */
     {
         bool led_on = false;
         for (;;) {
-            uint16_t reading = ADC_ReadLDR();
+            uint16_t reading = ReadLDR_Averaged();
             if (reading >= threshold + hyst) {
                 led_on = true;
                 LEDs_SetMainLight(1);
@@ -74,7 +86,7 @@ int main(void) {
                 led_on = false;
                 LEDs_SetMainLight(0);
             }
-            __delay_ms(50);
+            __delay_ms(500);
         }
     }
 }
