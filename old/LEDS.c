@@ -10,7 +10,7 @@
 
  #include <xc.h>
  #include "LEDS.h"
- #include "config.h"
+ #include "Config.h"
  
  /**
   * Initialize the 10-LED bus.
@@ -30,6 +30,7 @@
      TRISFbits.TRISF6 = 0;
      LATFbits.LATF6 = 0;
      // LED 5: RA4 
+     ANSELAbits.ANSELA4 = 0;
      TRISAbits.TRISA4 = 0;
      LATAbits.LATA4 = 0;
      // LED 6: RA5 

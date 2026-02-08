@@ -145,60 +145,66 @@ void LCD_Clear(void) {
     LCD_Delay_ms(2);
 }
 
-static void LCD_PrintNumber2Digit(uint8_t n) {
-    LCD_SendData('0' + (n / 10));
-    LCD_SendData('0' + (n % 10));
-}
-
-static void LCD_PrintNumber4Digit(uint16_t n) {
-    LCD_SendData('0' + (n / 1000));
-    LCD_SendData('0' + ((n / 100) % 10));
-    LCD_SendData('0' + ((n / 10) % 10));
-    LCD_SendData('0' + (n % 10));
-}
-
-void LCD_UpdateDisplay(uint8_t hours, uint8_t minutes,
-                      uint8_t day, uint8_t month, uint16_t year,
-                      bool is_dst) {
+void LCD_UpdateDisplay(uint8_t hours, uint8_t minutes, bool is_summer, uint16_t light_adc) {
+    // Convert 24-hour time to 12-hour with AM/PM
     uint8_t display_hours = hours;
     bool is_pm = false;
-
+    
     if (hours == 0) {
-        display_hours = 12;
+        display_hours = 12;  // Midnight = 12 AM
     } else if (hours == 12) {
-        is_pm = true;
+        is_pm = true;  // Noon = 12 PM
     } else if (hours > 12) {
-        display_hours = hours - 12;
+        display_hours = hours - 12;  // 13:00 = 1 PM, etc.
         is_pm = true;
     }
-
-    /* Row 0: Time + DST indicator */
+    
+    // Convert ADC reading (0-1023) to voltage (0.0-5.0V)
+    // Formula: voltage = (ADC / 1023) * 5.0
+    // To avoid floating point, we use: voltage_x10 = (ADC * 50) / 1023
+    uint16_t voltage_x10 = (light_adc * 50) / 1023;  // Result in tenths of volts
+    uint8_t volts = voltage_x10 / 10;
+    uint8_t decimal = voltage_x10 % 10;
+    
+    // top line
     LCD_SetCursor(0, 0);
+    
+    // Print hours (with space for single digit)
     if (display_hours < 10) {
         LCD_SendData(' ');
-        LCD_SendData('0' + display_hours);
+        LCD_PrintNumberAt(0, 1, display_hours, 1);
     } else {
-        LCD_PrintNumber2Digit(display_hours);
+        LCD_PrintNumberAt(0, 0, display_hours, 2);
     }
+    
+    // Print colon
     LCD_SendData(':');
-    LCD_PrintNumber2Digit(minutes);
+    
+    // Print minutes (always 2 digits)
+    LCD_PrintNumberAt(0, 3, minutes, 2);
+    
+    // Print AM or PM
     if (is_pm) {
-        LCD_PrintAt(0, 5, "PM ");
+        LCD_PrintAt(0, 5, "PM");
     } else {
-        LCD_PrintAt(0, 5, "AM ");
+        LCD_PrintAt(0, 5, "AM");
     }
-    if (is_dst) {
-        LCD_PrintAt(0, 8, "BST ");
+    
+    // Print DST status (WINTER or SUMMER)
+    if (is_summer) {
+        LCD_PrintAt(0, 11, "SUMR");  
     } else {
-        LCD_PrintAt(0, 8, "GMT ");
+        LCD_PrintAt(0, 11, "WINT");  
     }
-
-    /* Row 1: Date DD/MM/YYYY */
-    LCD_SetCursor(1, 0);
-    LCD_PrintNumber2Digit(day);
-    LCD_SendData('/');
-    LCD_PrintNumber2Digit(month);
-    LCD_SendData('/');
-    LCD_PrintNumber4Digit(year);
-    LCD_PrintAt(1, 10, "      ");
+    
+    // light volt
+    // Format: "Light: 2.5V    "
+    LCD_PrintAt(1, 0, "Light:");
+    LCD_PrintNumberAt(1, 7, volts, 1);
+    LCD_SendData('.');
+    LCD_PrintNumberAt(1, 9, decimal, 1);
+    LCD_SendData('V');
+    
+    // Clear rest of line
+    LCD_PrintAt(1, 11, "     ");
 }

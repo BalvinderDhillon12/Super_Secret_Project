@@ -1,92 +1,40 @@
-# Solar-Synchronized Light Controller
+# Mini project - Energy saving automatic outside light
 
-An energy-saving automatic outside light for the PIC18F67K40 microcontroller. The device monitors ambient light with an LDR and turns a main LED on at dusk and off at dawn, while turning it off during the small hours (1am–5am) to save energy when few people are around—addressing the brief’s requirement for councils-style street lighting. It stays synchronized with the sun indefinitely by detecting dusk and dawn, computing solar midnight as the midpoint of night, and applying drift correction so the internal clock never drifts out of sync with real time. Daylight savings is inferred from day length, and a testing mode compresses 24 hours into 24 seconds for rapid development.
+## Learning outcomes
 
----
+The principal learning objectives for this project are:
 
-## Key Functions
+- Implement a working microprocessor based system to achieve a more complex real world task
+- Develop your ability to independently plan, organise and structure your code 
+- Improve your grasp of the C language and writing your own functions
 
-| Module | Function | Description |
-|--------|----------|-------------|
-| **ADC** | `ADC_Init()` | Initializes the ADC in burst-average mode (32 samples) for LDR on RA3. |
-| **ADC** | `ADC_ReadLDR()` | Returns LDR value 0–1023 (0 = dark, 1023 = bright). |
-| **Timer** | `Timer_Init()` | Starts Timer0 with periodic interrupts for system ticks. |
-| **Timer** | `Timer_GetTicks()` | Returns current tick count; used with `TICKS_PER_SECOND` for timekeeping. |
-| **Timer** | `Timer_ResetTicks()` | Resets tick counter (optional recalibration). |
-| **LEDs** | `LEDs_Init()` | Sets up 9-LED bus and initial pin states. |
-| **LEDs** | `LEDs_SetMainLight(bool)` | Turns main streetlight (LED 9) on or off. |
-| **LEDs** | `LEDs_SetClockDisplay(uint8_t hour)` | Shows hour 0–23 in 5-bit binary on LEDs 1–5. |
-| **LEDs** | `LEDs_ToggleHeartbeat()` | Toggles heartbeat LED (LED 8) for status indication. |
-| **main** | `SolarUpdate()` | State machine: dusk/dawn detection, drift correction. |
-| **main** | `HandleDuskTransition()` | Records dusk time when transitioning day → night. |
-| **main** | `HandleDawnTransition()` | Records dawn time, computes solar midnight, returns drift correction. |
-| **main** | `CalculateDriftCorrection()` | Compares observed solar midnight to target and returns adjustment in minutes. |
-| **main** | `UpdateSeasonFromDayLength()` | Uses day length to set target solar midnight (DST vs winter). |
-| **main** | `ApplySync()` | Applies drift correction to internal clock. |
-| **main** | `IsInEnergySaveWindow()` | True if current hour is between 1am and 5am. |
+## Brief
 
----
+Outside lights that respond to ambient light levels are commonplace (i.e. street lights, porch lights, garden lights etc). These types of lights switch on at dusk and then turn off at dawn. However, energy and money can be saved if these lights are switched off during the small hours of the morning (for example, between 1am and 5am), when there are very few people around. Many councils in the UK have implemented/trialled this idea for street lights (https://www.bbc.co.uk/news/uk-england-derbyshire-16811386). Your task is to use the knowledge of microcontrollers and hardware that you have gained in labs 1-3 from this module to develop a fully automated solution.
 
-## User-Tweakable Constants
+## Specification
+Design and program a device that meets the following requirements:
 
-All user-facing constants are in **`config.h`**.
+1. Monitors light level with the LDR and turns on an LED in low light conditions (i.e. night-time) and off in bright conditions (i.e. daytime)
+1. Displays the current hour of day on the LED array in binary
+1. Turns the light off between approx. 1am and 5am
+1. Adjusts for daylight savings time
+1. Maintain synchronicity with the sun indefinitely
+1. Be fully automatic (requires zero maintenance after installation)
 
-### Test mode
+Please use this GitHub repo to manage your software development and submit your mini project code.
 
-| Constant | Effect |
-|----------|--------|
-| `TEST_MODE` | Uncomment to enable: 1 day = 24 seconds (1 hour = 1 second). Comment out for normal 24-hour operation. |
+## Supplementary information and help
+At first the task may seem quite straightforward but there are several points that often prove more tricky. The first is how to test code during development? You could test in real world conditions but you would be limited to one test cycle per day and this would severely slow down your development and debugging progress. To get around this you could implement a "testing mode" and pretend that a day lasts 24 seconds. This could be done using a #define directive to switch between "normal" and "testing" modes for your code.
 
-### LDR thresholds
+Adjusting for daylight savings time is not too tricky. The clocks always change (in the UK) on the last Sunday in March (they go forward an hour) and the last Sunday in October (they go back an hour). One method of achieving this is to initialise what day it is when device is first switched on (using manual input) and then keep track of the days that pass and what the day of the week it is. Another method might be to automatically figure out what time of year it is (see below). Also don't forget about leap years! 
 
-| Constant | Typical Range | Effect |
-|----------|---------------|--------|
-| `LDR_THRESHOLD_DUSK` | ~400 | Below this = transition to dark (dusk). |
-| `LDR_THRESHOLD_DAWN` | ~600 | Above this = transition to light (dawn). Hysteresis avoids flicker. |
+No clock is perfect, they can all run slightly fast/slow and can by influenced be external factors such as temperature. Ultimately this will result in drift over time and eventually the time will drift so far out of sync with real time that it is meaningless. For the purposes of our device the main requirement is that it remains in sync with the sun. You could use light from the sun to keep your clock in sync. Although the length of daylight varies considerably during the year, the midpoint between dusk and dawn only varies by a few minutes. This is termed solar midnight approx. 12am or solar noon approx. 12pm. One method of staying in sync with the sun is to use the LDR and record/calculate when these times occur and adjust your clock accordingly. The length of daylight also tells us information about what time of year it is and can be used to help us know when to adjust for daylight savings time.
 
-### Energy-saving window
+![Day length](gifs/day-length-london.jpg)
+http://wordpress.mrreid.org/2010/10/31/why-change-the-clocks/
 
-| Constant | Default | Effect |
-|----------|---------|--------|
-| `ENERGY_SAVE_START_HOUR` | 1 | Hour (0–23) when light turns off. |
-| `ENERGY_SAVE_END_HOUR` | 5 | Hour when light turns back on. |
 
-### Solar / DST
 
-| Constant | Default | Effect |
-|----------|---------|--------|
-| `SOLAR_MIDNIGHT_WINTER` | 0 | Target solar midnight (hour) in winter. |
-| `SOLAR_MIDNIGHT_SUMMER` | 1 | Target solar midnight in summer (DST). |
-| `DAY_LENGTH_SUMMER_MIN` | 14 | Day length (hours) above which summer/DST is assumed. |
-| `DAY_LENGTH_WINTER_MAX` | 10 | Day length below which winter is assumed. |
 
-### Timer (advanced)
 
-| Constant | Effect |
-|----------|--------|
-| `TMR0_RELOAD_HIGH`, `TMR0_RELOAD_LOW` | Timer0 reload for 1 s tick (production) or short period (test). |
-| `TICKS_PER_SECOND` | 1 in production; 3600 in test mode. |
-
-### ADC hardware (in `adc.h`)
-
-| Constant | Default | Effect |
-|----------|---------|--------|
-| `ADC_LDR_CHANNEL` | 3 | ADC channel for LDR (RA3/ANA3 on PIC18F67K40). |
-
----
-
-## Build and Run
-
-```bash
-make
-```
-
-(Flash the generated hex to the PIC18F67K40 using your programmer.)
-
----
-
-## Hardware
-
-- **Target:** PIC18F67K40 @ 64 MHz
-- **LDR:** RA3 (ANA3)
-- **LEDs:** 9-LED bus across ports G, A, F, B (LEDs 1–5 = binary clock; 8 = heartbeat; 9 = main light)
