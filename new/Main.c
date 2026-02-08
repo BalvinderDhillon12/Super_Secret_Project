@@ -7,7 +7,8 @@
 #include "Timer.h"
 #include "ADC.h"
 #include "LEDS.h"
-#include "LCD.h" 
+#include "LCD.h"
+#include "Buttons.h"
 #include <stdbool.h>
 
 // PIC Configuration
@@ -16,9 +17,13 @@
 #pragma config WDTE = OFF
 
 #define _XTAL_FREQ 64000000
-
+#define NUM_SAMPLES 32
+#define BLINK_MS 300
 
  // GLOBAL 
+
+static uint16_t g_ldr_dark_value = 0;
+static uint16_t g_ldr_delta = 10;
 
 static uint8_t g_hours = 0;
 static uint8_t g_minutes = 0;
@@ -76,32 +81,81 @@ static void AdvanceTimeOneSecond(void) {
 }
 
 
+static uint16_t ReadLDR_Averaged(void) {
+    uint32_t sum = 0;
+    for (uint8_t i = 0; i < NUM_SAMPLES; i++) {
+        sum += ADC_ReadLDR();
+        __delay_ms(2);
+    }
+    return (uint16_t)(sum / NUM_SAMPLES);
+}
+
+
 // MAIN PROGRAM
 
 void main(void) {
-    // Initialize hardware
+    uint16_t light_value;
+
+    // Initialize hardware (timer started after calibration)
     LEDs_Init();
     ADC_Init();
+    Buttons_Init();
+    //LCD_Init();
+
+    /* Two-step RF2 calibration: dark then light */
+    /* Phase 1: Blink LED 9 - user covers LDR, then presses RF2 to save dark value */
+    while (1) {
+        LEDs_SetMainLight(1);
+        __delay_ms(BLINK_MS);
+        LEDs_SetMainLight(0);
+        __delay_ms(BLINK_MS);
+        if (Button_RF2_Read() == 1) {
+            break;
+        }
+    }
+    __delay_ms(50);
+    g_ldr_dark_value = ReadLDR_Averaged();
+    while (Button_RF2_Read() == 1) {
+    }
+    __delay_ms(50);
+
+    /* Phase 2: LED 9 solid ON - user exposes LDR, then presses RF2 to save light value */
+    LEDs_SetMainLight(1);
+    while (Button_RF2_Read() == 0) {
+    }
+    __delay_ms(50);
+    light_value = ReadLDR_Averaged();
+    while (Button_RF2_Read() == 1) {
+    }
+    __delay_ms(50);
+
+    if (g_ldr_dark_value > light_value)
+        g_ldr_delta = (g_ldr_dark_value - light_value) / 2u;
+    else
+        g_ldr_delta = (light_value - g_ldr_dark_value) / 2u;
+    if (g_ldr_delta < 10u) g_ldr_delta = 10u;
+
     Timer_Init();
-    //LCD_Init(); 
-    
-    // Set initial time based on light level
-    uint16_t initial_light = ADC_ReadLDR();
-    if (initial_light < LDR_THRESHOLD_DUSK) {
-        g_hours = 0;    // Dark = midnight
-        g_minutes = 0;
-    } else {
-        g_hours = 12;   // Light = noon
-        g_minutes = 0;
+
+    /* Set initial time from one sample using calibrated comparison */
+    {
+        uint16_t light = ADC_ReadLDR();
+        bool currently_dark = !(light > g_ldr_dark_value + g_ldr_delta || light + g_ldr_delta < g_ldr_dark_value);
+        if (currently_dark) {
+            g_hours = 0;
+            g_minutes = 0;
+        } else {
+            g_hours = 12;
+            g_minutes = 0;
+        }
     }
     g_seconds = 0;
     g_target_solar_midnight = 0;
-    
-   // uint32_t last_second = Timer_GetTicks();
+
     uint32_t last_sensor = Timer_GetTicks();
     uint32_t last_heartbeat = Timer_GetTicks();
-    uint32_t last_tick = Timer_GetTicks(); 
-    
+    uint32_t last_tick = Timer_GetTicks();
+
     while (1) {
         uint32_t now = Timer_GetTicks();
 
@@ -138,8 +192,8 @@ void main(void) {
             if ((now - last_sensor) >= sensor_interval) {
                 last_sensor = now;
 
-                light = ADC_ReadLDR();  // Update light value (no uint16_t here!)
-                bool currently_dark = (light < LDR_THRESHOLD_DUSK);
+                light = ADC_ReadLDR();
+                bool currently_dark = !(light > g_ldr_dark_value + g_ldr_delta || light + g_ldr_delta < g_ldr_dark_value);
 
             // DUSK: Transition from light to dark
             if (!g_is_dark && currently_dark) {
