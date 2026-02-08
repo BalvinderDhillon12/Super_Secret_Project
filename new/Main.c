@@ -137,7 +137,7 @@ void main(void) {
 
     Timer_Init();
 
-    /* Set initial time from one sample using calibrated comparison */
+    /* Set initial time and g_is_dark from one sample using calibrated comparison */
     {
         uint16_t light = ADC_ReadLDR();
         bool currently_dark = !(light > g_ldr_dark_value + g_ldr_delta || light + g_ldr_delta < g_ldr_dark_value);
@@ -148,6 +148,7 @@ void main(void) {
             g_hours = 12;
             g_minutes = 0;
         }
+        g_is_dark = currently_dark;
     }
     g_seconds = 0;
     g_target_solar_midnight = 0;
@@ -192,9 +193,10 @@ void main(void) {
             if ((now - last_sensor) >= sensor_interval) {
                 last_sensor = now;
 
-                light = ADC_ReadLDR();
+                light = ReadLDR_Averaged();
                 bool currently_dark = !(light > g_ldr_dark_value + g_ldr_delta || light + g_ldr_delta < g_ldr_dark_value);
 
+#ifndef TEST_MODE
             // DUSK: Transition from light to dark
             if (!g_is_dark && currently_dark) {
                 g_dusk_time = GetTotalMinutes();
@@ -250,6 +252,7 @@ void main(void) {
                     g_dusk_recorded = false;
                 }
             }
+#endif
             
             g_is_dark = currently_dark;
         }
