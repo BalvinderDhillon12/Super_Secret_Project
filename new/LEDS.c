@@ -15,34 +15,28 @@
  /**
   * Initialize the 10-LED bus.
   * Set the first 9 LED pins (10 is unused) as outputs (initially off).
-  * Clear ANSEL for LED pins so they are digital (not analog); otherwise
-  * RA2/RA4/RA5 and RF6/RF0 can default to analog and LEDs 3/4 stay stuck on.
   */
  void LEDs_Init(void) {
-     // LED 1: RG0
+     // LED 1: RG0 
      TRISGbits.TRISG0 = 0;
      LATGbits.LATG0 = 0;
-     // LED 2: RG1
+     // LED 2: RG1 
      TRISGbits.TRISG1 = 0;
      LATGbits.LATG1 = 0;
-     // LED 3: RA2 (ensure digital, not analog)
-     ANSELAbits.ANSELA2 = 0;
+     // LED 3: RA2 
      TRISAbits.TRISA2 = 0;
      LATAbits.LATA2 = 0;
-     // LED 4: RF6 (ensure digital, not analog)
-     ANSELFbits.ANSELF6 = 0;
+     // LED 4: RF6 
      TRISFbits.TRISF6 = 0;
      LATFbits.LATF6 = 0;
-     // LED 5: RA4 (ensure digital, not analog)
+     // LED 5: RA4 
      ANSELAbits.ANSELA4 = 0;
      TRISAbits.TRISA4 = 0;
      LATAbits.LATA4 = 0;
-     // LED 6: RA5 (ensure digital)
-     ANSELAbits.ANSELA5 = 0;
+     // LED 6: RA5 
      TRISAbits.TRISA5 = 0;
      LATAbits.LATA5 = 0;
-     // LED 7: RF0 (ensure digital)
-     ANSELFbits.ANSELF0 = 0;
+     // LED 7: RF0 
      TRISFbits.TRISF0 = 0;
      LATFbits.LATF0 = 0;
      // LED 8: RB0 
