@@ -1,7 +1,8 @@
 /*******************************************************************************
  * File:   ADC.c
- * Purpose: ADC driver for LDR (light sensor) on RA3. Burst-average mode,
- *          32 samples, result 0-1023. Includes timeout to avoid hang if ADC fails.
+ * Purpose: ADC driver for LDR (light sensor) on RA3. Single conversion mode
+ *          (burst-average disabled for board compatibility), result 0-1023.
+ *          Includes timeout to avoid hang if ADC fails.
  ******************************************************************************/
 
 #include <xc.h>
@@ -10,24 +11,19 @@
 
 void ADC_Init(void) {
     TRISAbits.TRISA3 = 1;   // LDR input on RA3
-    ANSELAbits.ANSELA3 = 1; // RA3 analog 
-    ADPCH = ADC_LDR_CHANNEL; // RA3 
+    ANSELAbits.ANSELA3 = 1; // RA3 analog
+    ADPCH = ADC_LDR_CHANNEL; // RA3
 
     ADCON0bits.ADCS = 1;    // FRC (Fast RC) clock
-    ADACQ = 10;             // 10 TAD acquisition time 
+    ADACQ = 10;             // 10 TAD acquisition time
 
-    ADCON0bits.ADFM = 1;   
+    ADCON0bits.ADFM = 1;    // Right-justified result (10-bit in ADRESH/ADRESL)
 
-    /* Burst-average mode (use MD for XC8 header compatibility). */
-    ADCON2bits.MD = 0b010;  
+    /* Basic (single conversion) mode; burst-average disabled for board compatibility. */
+    ADCON2bits.MD = 0b000;
 
-    // 32 samples: result is 32x raw value, so we shift right by 5 to get 0-1023. 
-    ADRPT = 32;
+    ADREF = 0x00;            // VREF+ = VDD, VREF- = VSS
 
-    // Positive reference VREF+ = VDD, negative = VSS. 
-    ADREF = 0x00;
-
-    // Enable the ADC module. 
     ADCON0bits.ADON = 1;
 }
 
@@ -50,9 +46,9 @@ uint16_t ADC_ReadLDR(void) {
         return 512;
     }
 
-    adc_result = ADFLTRH;
-    adc_result = (adc_result << 8) | ADFLTRL;
-    adc_result = adc_result >> 5;
+    /* Single conversion: 10-bit result in ADRESH (high 2 bits) and ADRESL (low 8 bits). */
+    adc_result = (uint16_t)ADRESH << 8;
+    adc_result |= ADRESL;
 
     return adc_result;
 }
