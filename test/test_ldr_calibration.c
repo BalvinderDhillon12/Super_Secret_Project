@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 #include <xc.h>
+#include <stdbool.h>
 #include "../new/Config.h"
 #include "../new/ADC.h"
 #include "../new/LEDS.h"
@@ -17,6 +18,7 @@
 #define _XTAL_FREQ 64000000
 
 #define BLINK_MS 300
+#define HYST 50   /* Hysteresis margin: only change LED state when reading clearly below/above threshold */
 
 int main(void) {
     uint16_t dark_value;
@@ -56,14 +58,19 @@ int main(void) {
     threshold = (dark_value + light_value) / 2u;
     LEDs_SetMainLight(0);
 
-    /* Running: LED 9 on when dark (reading <= threshold), off when light */
-    for (;;) {
-        uint16_t reading = ADC_ReadLDR();
-        if (reading <= threshold) {
-            LEDs_SetMainLight(1);
-        } else {
-            LEDs_SetMainLight(0);
+    /* Running: LED 9 on when dark, off when light; hysteresis avoids blinking near threshold */
+    {
+        bool led_on = false;
+        for (;;) {
+            uint16_t reading = ADC_ReadLDR();
+            if (reading <= threshold - HYST) {
+                led_on = true;
+                LEDs_SetMainLight(1);
+            } else if (reading >= threshold + HYST) {
+                led_on = false;
+                LEDs_SetMainLight(0);
+            }
+            __delay_ms(50);
         }
-        __delay_ms(50);
     }
 }
