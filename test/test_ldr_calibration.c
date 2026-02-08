@@ -18,12 +18,13 @@
 #define _XTAL_FREQ 64000000
 
 #define BLINK_MS 300
-#define HYST 50   /* Hysteresis margin: only change LED state when reading clearly below/above threshold */
 
 int main(void) {
     uint16_t dark_value;
     uint16_t light_value;
     uint16_t threshold;
+    uint16_t range;
+    uint16_t hyst;
 
     LEDs_Init();
     ADC_Init();
@@ -56,6 +57,9 @@ int main(void) {
     __delay_ms(50);
 
     threshold = (dark_value + light_value) / 2u;
+    range = light_value - dark_value;
+    hyst = range / 4u;
+    if (hyst < 5u) hyst = 5u;   /* minimum margin to avoid noise */
     LEDs_SetMainLight(0);
 
     /* Running: LED 9 on when dark, off when light; hysteresis avoids blinking near threshold */
@@ -63,10 +67,10 @@ int main(void) {
         bool led_on = false;
         for (;;) {
             uint16_t reading = ADC_ReadLDR();
-            if (reading <= threshold - HYST) {
+            if (reading <= threshold - hyst) {
                 led_on = true;
                 LEDs_SetMainLight(1);
-            } else if (reading >= threshold + HYST) {
+            } else if (reading >= threshold + hyst) {
                 led_on = false;
                 LEDs_SetMainLight(0);
             }
