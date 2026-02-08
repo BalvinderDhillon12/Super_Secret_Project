@@ -6,7 +6,7 @@
  * Purpose:  
 
  */
-
+#define _XTAL_FREQ 64000000
 
 #ifndef Config_H
 #define Config_H
@@ -14,21 +14,19 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
  // test mode configuration 
 #define TEST_MODE
 
 
 #ifdef TEST_MODE
-    /* Test mode: 3600 ticks = 1 virtual second (24 s real = 1 day). Prescaler 1:256. */
-    #define TMR0_RELOAD_HIGH    0xFF
-    #define TMR0_RELOAD_LOW     0xFC
-    #define TICKS_PER_SECOND    3600   /* 3600 ticks = 1 virtual second */
-#else
-    /* Production: 1 tick = 1 real second. Prescaler 1:256, 64 MHz. */
     #define TMR0_RELOAD_HIGH    0x0B
     #define TMR0_RELOAD_LOW     0xDB
-    #define TICKS_PER_SECOND    1      /* 1 tick = 1 real second */
+    #define TICKS_PER_SECOND    1  
+    #define TICKS_PER_HOUR      1   
+#else
+    #define TMR0_RELOAD_HIGH    0x0B
+    #define TMR0_RELOAD_LOW     0xDB
+    #define TICKS_PER_SECOND    1       /* Normal: 1 tick = 1 real second */
 #endif
 
 
