@@ -1,0 +1,85 @@
+# Summary of project 
+
+This project aims to develop a system which monitors ambient light with an LDR and turns on a main LED at dusk and off at dawn. It also turns it off during the hours of 1am to 5am to save energy. 
+It stays synchronised with the sun by detecting dusk and dawn where it computes solar midnight as the midpoint of the night. The system also applies a correction to ensure the internal clock would 
+not drift out of syncing with real time. To ensure efficiency, 24 hours was recalibrated into 24 seconds for rapid prototyping.
+
+
+
+# Key Performance Criteria 
+To determine the success of the system, the criteria below were established: 
+- LED turns off between the hours of 1am to 5am (4 hours = 4 seconds in the LED)
+- Displays the current hour of the day in the LED array 
+- Adjusts for daylight savings time between the last Sunday in March and last Sunday in October. 
+- Always in sync with the sun
+
+
+
+# Summary of Key Functions
+
+
+
+
+# Control Architecture
+┌─────────────────────────────────────────────────────────────┐
+│                      MAIN CONTROL LOOP                      │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                ┌─────────────┴─────────────┐
+                │                           │
+         ┌──────▼──────┐           ┌───────▼────────┐
+         │ TIMEKEEPING │           │ LIGHT SENSING  │
+         │   SYSTEM    │           │     SYSTEM     │
+         └──────┬──────┘           └───────┬────────┘
+                │                          │
+    ┌───────────▼──────────┐              │
+    │  Timer ISR           │              │
+    │  (Background)        │              │
+    │  • Fires every 0.25s │              │
+    │  • Increments ticks  │              │
+    └───────────┬──────────┘              │
+                │                          │
+    ┌───────────▼──────────┐    ┌─────────▼──────────┐
+    │ AdvanceTimeOneSecond │    │   ADC_ReadLDR()    │
+    │ • Every 4 ticks      │    │   • Burst average  │
+    │ • Updates h:m:s      │    │   • 32 samples     │
+    └──────────────────────┘    └─────────┬──────────┘
+                                           │
+                              ┌────────────▼──────────┐
+                              │  Dusk/Dawn Detection  │
+                              │  • Threshold: 400/600 │
+                              └────────────┬──────────┘
+                                           │
+                              ┌────────────▼──────────────┐
+                              │ Solar Midnight Calculation│
+                              │ • Midpoint of night       │
+                              │ • Season detection        │
+                              │ • Drift correction        │
+                              └────────────┬──────────────┘
+                                           │
+                              ┌────────────▼──────────────┐
+                              │    Clock Adjustment       │
+                              │    (if drift >2 min)      │
+                              └────────────┬──────────────┘
+                                           │
+                              ┌────────────▼──────────────┐
+                              │      LED CONTROL          │
+                              │  • Main light on/off      │
+                              │  • Energy save 1am-5am    │
+                              │  • Binary clock display   │
+                              │  • Heartbeat indicator    │
+                              └───────────────────────────┘
+
+
+# Summary of Initialisations 
+
+
+
+
+
+# Lessons Learned & Optimisations
+
+
+
+
+# Known Issues & Resolves 
