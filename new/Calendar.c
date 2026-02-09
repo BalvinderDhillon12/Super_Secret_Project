@@ -40,13 +40,7 @@ static uint8_t LastDayOfMonth(uint16_t y, uint8_t m) {
 /* Get day number of last Sunday in given month. */
 static uint8_t LastSundayOfMonth(uint16_t y, uint8_t m) {
     uint8_t last = LastDayOfMonth(y, m);
-    uint8_t d;
-    for (d = last; d >= 1; d--) {
-        if (DayOfWeek(y, m, d) == 0) {
-            return d;
-        }
-    }
-    return 1; /* fallback */
+    return last - DayOfWeek(y, m, last);
 }
 
 void Calendar_Init(uint16_t year, uint8_t month, uint8_t day) {
@@ -84,20 +78,10 @@ uint8_t Calendar_LastSundayOfOctober(void) {
 }
 
 uint8_t Calendar_IsDST(void) {
-    uint8_t last_sun_mar = LastSundayOfMonth(s_year, 3);
-    uint8_t last_sun_oct = LastSundayOfMonth(s_year, 10);
-
-    if (s_month < 3) return 0;
-    if (s_month > 10) return 0;
-    if (s_month == 3) {
-        if (s_day < last_sun_mar) return 0;
-        return 1;
-    }
-    if (s_month == 10) {
-        if (s_day > last_sun_oct) return 0;
-        return 1;
-    }
-    return 1; /* April through September */
+    if (s_month < 3 || s_month > 10) return 0;
+    if (s_month > 3 && s_month < 10) return 1;
+    if (s_month == 3) return (s_day >= LastSundayOfMonth(s_year, 3));
+    return (s_day <= LastSundayOfMonth(s_year, 10));  /* month == 10 */
 }
 
 uint16_t Calendar_GetYear(void) {

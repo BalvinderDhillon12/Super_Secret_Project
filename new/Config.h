@@ -21,13 +21,15 @@
 #ifdef TEST_MODE
     #define TMR0_RELOAD_HIGH    0x0B
     #define TMR0_RELOAD_LOW     0xDB
-    #define TICKS_PER_SECOND    1  
-    #define TICKS_PER_HOUR      1   
+    #define TICKS_PER_SECOND    1
+    #define TICKS_PER_HOUR      1
+    #define SENSOR_INTERVAL     TICKS_PER_HOUR
 #else
     #define TMR0_RELOAD_HIGH    0x0B
     #define TMR0_RELOAD_LOW     0xDB
     #define TICKS_PER_SECOND    1       /* Normal: 1 tick = 1 real second */
     #define TICKS_PER_HOUR      3600    /* 1 hour = 3600 ticks */
+    #define SENSOR_INTERVAL     60
 #endif
 
 
@@ -41,11 +43,9 @@
 #define START_MONTH  3     /* March - near DST spring-forward */
 #define START_DAY    25    /* Last Sun Mar 2026 = Mar 29 */
 
-#define SECONDS_PER_HOUR        3600  
 #define SECONDS_PER_MINUTE      60
 #define MINUTES_PER_HOUR        60
 #define HOURS_PER_DAY           24
-#define MINUTES_PER_DAY         1440    // 24 * 60 
 #define ADC_LDR_CHANNEL 0x03
 
 #endif 

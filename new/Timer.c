@@ -56,12 +56,3 @@ uint32_t Timer_GetTicks(void) {
     INTCONbits.GIE = gie_save;
     return ticks;
 }
-
-void Timer_ResetTicks(void) {
-    uint8_t gie_save;
-
-    gie_save = INTCONbits.GIE;
-    INTCONbits.GIE = 0;   // Disable interrupts for writing 
-    s_tick_count = 0;
-    INTCONbits.GIE = gie_save;
-}

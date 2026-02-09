@@ -15,13 +15,3 @@ void Buttons_Init(void) {
 uint8_t Button_RF2_Read(void) {
     return (uint8_t)(PORTFbits.RF2 ? 1u : 0u);
 }
-
-void Button_RF2_WaitPress(void) {
-    /* Wait until button is pressed (high) */
-    while (Button_RF2_Read() == 0) {
-    }
-    __delay_ms(50);  /* Debounce */
-    while (Button_RF2_Read() == 1) {
-    }
-    __delay_ms(50);  /* Debounce release */
-}

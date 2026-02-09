@@ -15,7 +15,4 @@ void Buttons_Init(void);
 /** Returns 1 when RF2 is pressed, 0 when released. */
 uint8_t Button_RF2_Read(void);
 
-/** Block until RF2 is pressed (with debounce), then until released. Single clean press. */
-void Button_RF2_WaitPress(void);
-
 #endif /* BUTTONS_H */

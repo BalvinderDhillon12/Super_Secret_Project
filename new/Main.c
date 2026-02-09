@@ -18,10 +18,8 @@
 #pragma config WDTE = OFF
 
 #define _XTAL_FREQ 64000000
-#define NUM_SAMPLES 32
 #define BLINK_MS 300
 
-static uint16_t g_ldr_dark_value = 0;
 static uint16_t g_threshold = 512;      /* midpoint between dark and light */
 static bool     g_dark_above = true;    /* true if dark ADC value > light ADC value */
 
@@ -50,17 +48,8 @@ static void AdvanceTimeOneSecond(void) {
     }
 }
 
-static uint16_t ReadLDR_Averaged(void) {
-    uint32_t sum = 0;
-    for (uint8_t i = 0; i < NUM_SAMPLES; i++) {
-        sum += ADC_ReadLDR();
-        __delay_ms(2);
-    }
-    return (uint16_t)(sum / NUM_SAMPLES);
-}
-
 void main(void) {
-    uint16_t light_value;
+    uint16_t dark_value, light_value;
 
     LEDs_Init();
     ADC_Init();
@@ -78,7 +67,7 @@ void main(void) {
         }
     }
     __delay_ms(50);
-    g_ldr_dark_value = ReadLDR_Averaged();
+    dark_value = ADC_ReadLDR();
     while (Button_RF2_Read() == 1) {
     }
     __delay_ms(50);
@@ -87,13 +76,13 @@ void main(void) {
     while (Button_RF2_Read() == 0) {
     }
     __delay_ms(50);
-    light_value = ReadLDR_Averaged();
+    light_value = ADC_ReadLDR();
     while (Button_RF2_Read() == 1) {
     }
     __delay_ms(50);
 
-    g_threshold = (g_ldr_dark_value + light_value) / 2u;
-    g_dark_above = (g_ldr_dark_value > light_value);
+    g_threshold = (dark_value + light_value) / 2u;
+    g_dark_above = (dark_value > light_value);
 
     Timer_Init();
     Calendar_Init(START_YEAR, START_MONTH, START_DAY);
@@ -122,6 +111,7 @@ void main(void) {
 
     while (1) {
         uint32_t now = Timer_GetTicks();
+        bool time_advanced = false;
 
 #ifdef TEST_MODE
         if (now - last_tick >= TICKS_PER_HOUR) {
@@ -134,36 +124,25 @@ void main(void) {
             }
             g_minutes = 0;
             g_seconds = 0;
-
-            /* DST spring-forward: last Sun Mar, 1AM -> 2AM */
-            if (g_hours == 1 && !g_dst_active &&
-                Calendar_GetMonth() == 3 && Calendar_GetDay() == Calendar_LastSundayOfMarch()) {
-                g_hours = 2;
-                g_dst_active = true;
-            }
-            /* DST fall-back: last Sun Oct, 2AM -> 1AM */
-            if (g_hours == 2 && g_dst_active && !g_dst_fall_back_done &&
-                Calendar_GetMonth() == 10 && Calendar_GetDay() == Calendar_LastSundayOfOctober()) {
-                g_hours = 1;
-                g_dst_active = false;
-                g_dst_fall_back_done = true;
-            }
+            time_advanced = true;
         }
 #else
         if (now - last_tick >= TICKS_PER_SECOND) {
             last_tick += TICKS_PER_SECOND;
             AdvanceTimeOneSecond();
+            time_advanced = (g_minutes == 0);
+        }
+#endif
 
-            /* DST spring-forward: last Sun Mar, 1AM -> 2AM */
-            if (g_hours == 1 && g_minutes == 0 && !g_dst_active &&
+        if (time_advanced) {
+            if (g_hours == 1 && !g_dst_active &&
                 Calendar_GetMonth() == 3 && Calendar_GetDay() == Calendar_LastSundayOfMarch()) {
                 g_hours = 2;
                 g_minutes = 0;
                 g_seconds = 0;
                 g_dst_active = true;
             }
-            /* DST fall-back: last Sun Oct, 2AM -> 1AM */
-            if (g_hours == 2 && g_minutes == 0 && g_dst_active && !g_dst_fall_back_done &&
+            if (g_hours == 2 && g_dst_active && !g_dst_fall_back_done &&
                 Calendar_GetMonth() == 10 && Calendar_GetDay() == Calendar_LastSundayOfOctober()) {
                 g_hours = 1;
                 g_minutes = 0;
@@ -172,19 +151,14 @@ void main(void) {
                 g_dst_fall_back_done = true;
             }
         }
-#endif
 
         LEDs_SetClockDisplay(g_hours);
 
         static uint16_t light = 512;
-        uint32_t sensor_interval = TICKS_PER_HOUR;
-#ifndef TEST_MODE
-        sensor_interval = 60;
-#endif
 
-        if ((now - last_sensor) >= sensor_interval) {
+        if ((now - last_sensor) >= SENSOR_INTERVAL) {
             last_sensor = now;
-            light = ReadLDR_Averaged();
+            light = ADC_ReadLDR();
             if (g_dark_above) {
                 g_is_dark = (light <= g_threshold);
             } else {
