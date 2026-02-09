@@ -10,8 +10,8 @@
 
 
 // Control pins
-#define LCD_RS  LATCbits.LATC2    // Register Select: 0=command, 1=data
-#define LCD_E   LATCbits.LATC6    // Enable: pulse this to send data
+#define LCD_RS  LATCbits.LATC6    // Register Select: 0=command, 1=data
+#define LCD_E   LATCbits.LATC2    // Enable: pulse this to send data
 
 // Data pins (4-bit mode uses only D4-D7)
 #define LCD_D4  LATBbits.LATB3
@@ -104,9 +104,15 @@ static void LCD_PrintNumberAt(uint8_t row, uint8_t col, uint8_t number, uint8_t 
 
 
 void LCD_Init(void) {
+    // Force digital mode on LCD pins (PIC18 may default some to analog)
+    ANSELBbits.ANSELB2 = 0;  // RB2 (D5) digital
+    ANSELBbits.ANSELB3 = 0;  // RB3 (D4) digital
+    ANSELEbits.ANSELE1 = 0;  // RE1 (D7) digital
+    ANSELEbits.ANSELE3 = 0;  // RE3 (D6) digital
+
     // Configure all LCD pins as outputs
-    TRISCbits.TRISC2 = 0;  // RS
-    TRISCbits.TRISC6 = 0;  // E
+    TRISCbits.TRISC2 = 0;  // E
+    TRISCbits.TRISC6 = 0;  // RS
     TRISBbits.TRISB3 = 0;  // D4
     TRISBbits.TRISB2 = 0;  // D5
     TRISEbits.TRISE3 = 0;  // D6
