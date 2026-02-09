@@ -102,9 +102,9 @@ void main(void) {
     {
         uint16_t light = ADC_ReadLDR();
         if (g_dark_above) {
-            g_is_dark = (light >= g_threshold);
-        } else {
             g_is_dark = (light <= g_threshold);
+        } else {
+            g_is_dark = (light >= g_threshold);
         }
         if (g_is_dark) {
             g_hours = 0;
@@ -186,9 +186,9 @@ void main(void) {
             last_sensor = now;
             light = ReadLDR_Averaged();
             if (g_dark_above) {
-                g_is_dark = (light >= g_threshold);
-            } else {
                 g_is_dark = (light <= g_threshold);
+            } else {
+                g_is_dark = (light >= g_threshold);
             }
         }
 
