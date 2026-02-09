@@ -22,7 +22,8 @@
 #define BLINK_MS 300
 
 static uint16_t g_ldr_dark_value = 0;
-static uint16_t g_ldr_delta = 10;
+static uint16_t g_threshold = 512;      /* midpoint between dark and light */
+static bool     g_dark_above = true;    /* true if dark ADC value > light ADC value */
 
 static uint8_t g_hours = 0;
 static uint8_t g_minutes = 0;
@@ -91,11 +92,8 @@ void main(void) {
     }
     __delay_ms(50);
 
-    if (g_ldr_dark_value > light_value)
-        g_ldr_delta = (g_ldr_dark_value - light_value) / 2u;
-    else
-        g_ldr_delta = (light_value - g_ldr_dark_value) / 2u;
-    if (g_ldr_delta < 10u) g_ldr_delta = 10u;
+    g_threshold = (g_ldr_dark_value + light_value) / 2u;
+    g_dark_above = (g_ldr_dark_value > light_value);
 
     Timer_Init();
     Calendar_Init(START_YEAR, START_MONTH, START_DAY);
@@ -103,7 +101,11 @@ void main(void) {
 
     {
         uint16_t light = ADC_ReadLDR();
-        g_is_dark = !(light > g_ldr_dark_value + g_ldr_delta || light + g_ldr_delta < g_ldr_dark_value);
+        if (g_dark_above) {
+            g_is_dark = (light >= g_threshold);
+        } else {
+            g_is_dark = (light <= g_threshold);
+        }
         if (g_is_dark) {
             g_hours = 0;
             g_minutes = 0;
@@ -183,7 +185,11 @@ void main(void) {
         if ((now - last_sensor) >= sensor_interval) {
             last_sensor = now;
             light = ReadLDR_Averaged();
-            g_is_dark = !(light > g_ldr_dark_value + g_ldr_delta || light + g_ldr_delta < g_ldr_dark_value);
+            if (g_dark_above) {
+                g_is_dark = (light >= g_threshold);
+            } else {
+                g_is_dark = (light <= g_threshold);
+            }
         }
 
         static uint8_t last_displayed_second = 0xFF;
