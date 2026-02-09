@@ -19,6 +19,7 @@
 
 #define _XTAL_FREQ 64000000
 #define BLINK_MS 300
+#define NUM_SAMPLES 32
 
 static uint16_t g_threshold = 512;      /* midpoint between dark and light */
 static bool     g_dark_above = true;    /* true if dark ADC value > light ADC value */
@@ -48,6 +49,15 @@ static void AdvanceTimeOneSecond(void) {
     }
 }
 
+static uint16_t ReadLDR_Averaged(void) {
+    uint32_t sum = 0;
+    for (uint8_t i = 0; i < NUM_SAMPLES; i++) {
+        sum += ADC_ReadLDR();
+        __delay_ms(2);
+    }
+    return (uint16_t)(sum / NUM_SAMPLES);
+}
+
 void main(void) {
     uint16_t dark_value, light_value;
 
@@ -67,7 +77,7 @@ void main(void) {
         }
     }
     __delay_ms(50);
-    dark_value = ADC_ReadLDR();
+    dark_value = ReadLDR_Averaged();
     while (Button_RF2_Read() == 1) {
     }
     __delay_ms(50);
@@ -76,7 +86,7 @@ void main(void) {
     while (Button_RF2_Read() == 0) {
     }
     __delay_ms(50);
-    light_value = ADC_ReadLDR();
+    light_value = ReadLDR_Averaged();
     while (Button_RF2_Read() == 1) {
     }
     __delay_ms(50);
@@ -158,7 +168,7 @@ void main(void) {
 
         if ((now - last_sensor) >= SENSOR_INTERVAL) {
             last_sensor = now;
-            light = ADC_ReadLDR();
+            light = ReadLDR_Averaged();
             if (g_dark_above) {
                 g_is_dark = (light <= g_threshold);
             } else {
